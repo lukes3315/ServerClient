@@ -18,8 +18,6 @@ Server::Server(int port)
 {
   this->port = port;
   this->clientIDS = 0;
-  int yes = 1;
-  //  setsockopt(socketfd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(int));
   if ((socketfd = socket(AF_INET,SOCK_STREAM, 0)) < 0)
     {
       writeError("Server contructor socket", "Error creating socket");
@@ -29,8 +27,6 @@ Server::Server(int port)
   self.sin_family = AF_INET;
   self.sin_port = htons(port);
   self.sin_addr.s_addr = INADDR_ANY;
-
-  
   int bind_err;
   if ((bind_err = bind(socketfd, (struct sockaddr*)&self, sizeof(self))) < 0)
     {
@@ -43,6 +39,7 @@ Server::Server(int port)
       writeError("Server constructor listen", "Error listening");
       exit(0);
     }
+  someClientsNotRunning = false;
 }
 
 Server::~Server()
@@ -77,22 +74,29 @@ bool Server::acceptConnections()
     }
   ++clientIDS;
   Client* c = new Client(clientIDS, clientfd, this);
-  std::cout << "Adding client =  = " << clientfd << std::endl;
+  std::cout << "Adding client = " << clientfd << std::endl;
   clients.push_back(c);
   return true;
 }
 
-void Server::stopClient(int sockfd, int id)
+void Server::stopClient()
 {
-  std::vector<Client*>::iterator it = clients.begin();
-  int i = 0;
+  someClientsNotRunning = true;
+}
 
-  std::cout << "Stopclient number = "<< id <<std::endl;
-  for (; it != clients.end() ; ++it)
+void Server::checkClientConnections()
+{
+  if (someClientsNotRunning)
     {
-      if ((*it)->getId() == id)
+      std::vector<Client*>::iterator it = clients.begin();
+
+      for (; it != clients.end() ; ++it)
 	{
-	  it = clients.erase(it);
+	  if ((*it)->isRunning() == false)
+	    {
+	      it = clients.erase(it);
+	    }
 	}
-    }
+      someClientsNotRunning = false;
+  }
 }

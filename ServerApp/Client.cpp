@@ -1,3 +1,4 @@
+#include "Server.hpp"
 #include "Client.hpp"
 
 Client::Client(int _id, int _socket, Server *serv)
@@ -8,6 +9,7 @@ Client::Client(int _id, int _socket, Server *serv)
   server = serv;
   try
     {
+      std::cout << "Hello how are you ? " << std::endl;
       this->backgroundReadingThread = new std::thread(&Client::readData, 
 						      this,
 						      _socket);
@@ -41,7 +43,6 @@ void Client::readData(int _socket)
       while (running && bytesRead > 0)
 	{
 	  bytesRead = read(_socket, buffer, 256);
-	  
 	  std::cout << "Data got : " << buffer << "Bytes read="
 		    << bytesRead << std::endl;
 	}
@@ -53,8 +54,7 @@ void Client::readData(int _socket)
   bzero(buffer, 256);
   free(buffer);
   running = false;
-  server->stopClient(socketfd, ID);
-  std::cout << "Client #" << this->ID << " closed "<<std::endl;
+  server->stopClient();
 }
 
 bool Client::isRunning()const
