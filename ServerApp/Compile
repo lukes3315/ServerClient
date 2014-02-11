@@ -1,0 +1,1 @@
+g++ Client.cpp Server.cpp simple-server.cpp -lopencv_core -fpermissive -lopencv_legacy -lopencv_highgui -lopencv_imgproc -pthread -std=c++11
