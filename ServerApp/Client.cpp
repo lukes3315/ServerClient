@@ -26,7 +26,7 @@ Client::~Client()
       close(socketfd);
     }
 }
-
+ 
 void Client::readData(int _socket)
 {  
   std::cout << "Starting thread for client # " << ID << std::endl;
@@ -41,7 +41,6 @@ void Client::readData(int _socket)
       while (running && bytesRead > 0)
 	{
 	  bytesRead = read(_socket, buffer, 256);
-	  
 	  std::cout << "Data got : " << buffer << "Bytes read="
 		    << bytesRead << std::endl;
 	}
