@@ -1,0 +1,1 @@
+g++ main.cpp -lopencv_core -lopencv_imgproc -lopencv_highgui -fpermissive
