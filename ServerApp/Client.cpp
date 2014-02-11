@@ -1,3 +1,4 @@
+#include <opencv2/opencv.hpp>
 #include "Server.hpp"
 #include "Client.hpp"
 
@@ -32,7 +33,9 @@ Client::~Client()
 void Client::readData(int _socket)
 {  
   std::cout << "Starting thread for client # " << ID << std::endl;
-  char * buffer = (char*)malloc(sizeof(char) * 256);
+  char * buffer = (char*)malloc(sizeof(char) * 1);
+  std::string data = "";
+  cv::Mat img(480, 640, CV_32FC1);
   if (buffer == NULL)
     {
       std::cout << "Malloc error" << std::endl;
@@ -42,9 +45,20 @@ void Client::readData(int _socket)
       int bytesRead = 1;
       while (running && bytesRead > 0)
 	{
-	  bytesRead = read(_socket, buffer, 256);
-	  std::cout << "Data got : " << buffer << "Bytes read="
-		    << bytesRead << std::endl;
+	  bytesRead = read(_socket, buffer, 1);
+	  if (data.find("start") != std::string::npos
+	      && data.find("end") != std::string::npos)
+	    {
+	      img.data = data.c_str();
+	      data = "";
+	    }
+	  else
+	    {
+	      data += buffer;
+	    }
+	  cv::imshow("win2", img);
+	  //std::cout << "Data got : " << buffer << "Bytes read="
+	  //	    << bytesRead << std::endl;
 	}
     }
   catch (std::exception e)
