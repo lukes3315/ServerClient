@@ -1,1 +1,1 @@
-g++ main.cpp -lopencv_core -lopencv_imgproc -lopencv_highgui -fpermissive
+g++ main.cpp base64.cpp -lopencv_core -lopencv_imgproc -lopencv_highgui -fpermissive

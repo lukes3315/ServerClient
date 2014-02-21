@@ -9,6 +9,7 @@
 #include <strings.h>
 #include <iostream>
 #include <opencv2/opencv.hpp>
+#include "base64.hpp"
 
 int main(int argc, char *argv[])
 {
@@ -16,15 +17,15 @@ int main(int argc, char *argv[])
   struct sockaddr_in serv_addr;
   struct hostent *server;
   cv::Mat img;
-  cv::VideoCapture cap("./video.MOV");
-  char buffer[256];
+  //cv::VideoCapture cap("./video.MOV");
+  
 
-
-  if (!cap.isOpened())
-    {
+  /*  if (!cap.isOpened())
+      {
       std::cout << "Error opening file" << std::endl;
       return -1;
-    }
+      }
+  */
   if (argc < 3) {
     fprintf(stderr,"usage %s hostname port\n", argv[0]);
     exit(0);
@@ -61,38 +62,58 @@ int main(int argc, char *argv[])
   unsigned char * bytes;
   int sizex = 0, sizey = 0;
   cv::Mat resized(480, 640, CV_32FC1);
-  while (k != 1114089)
+  img = cv::imread("img.jpg", CV_LOAD_IMAGE_COLOR);
+  
+
+  std::stringstream ss;
+  ss << img.cols;
+  ss << "x";
+  ss << img.rows;
+  std::string size_string = "";
+  size_string = ss.str();
+  std::cout << "[Client sending message = " << size_string.c_str() << std::endl;
+  for (int i = 0; i < size_string.size() ; ++i)
     {
-      cap >> img;
-      std::cout << "trying to capture image" << std::endl;
-      if (img.empty())
-	break;
-      cv::resize(img, resized, resized.size(), 0, 0, CV_INTER_CUBIC);
-      if (sizex == 0)
-	{
-	  sizex = resized.cols;
-	  sizey = resized.rows;
-	  std::cout << "after init" <<  "size x= " << sizex << "sizey = "<< sizey << "step = "<< img.step << std::endl;
-	  bytes = (unsigned char*)malloc(sizeof(unsigned char) * (sizex * sizey));
-	  bzero(bytes, strlen((const char*)bytes));
-	}
-      std::cout << "Before reading image" << std::endl;
-      write(sockfd, "start", 4);
-      for (int i = 0 ; i < sizex * sizey; ++i)
-	{
-	  write(sockfd, img.data[i], 1);
-	  //bytes[i] = img.data[i];
-	  //bytes.push_front((unsigned char)(img.data + i * img.step + j));
-	}
-      
-      write(sockfd, "end", 3);
-      //cv::imshow("Win", resized);
-      k = cv::waitKey(1);
-      std::cout << k << std::endl;
+      std::cout << "Sending = " << size_string[i] << std::endl;
+      write(sockfd, &size_string[i], 1);
     }
-
+  write(sockfd, "-", 1);
+  std::stringstream ss1;
+  std::basic_string<char> encoded = base64_encode(img.data, img.total() * img.elemSize());
+  std::cout << encoded.size() << std::endl;
+  ss1 << encoded.size();
+  size_string = ss1.str();
+  write(sockfd, size_string.c_str(), size_string.size());
+  write(sockfd, "\n", 1);
+  char buffer[4096];
+  bzero(buffer, 4096);
+  int count = 0;
+  for (int i = 0 ; i < encoded.size() ; ++i)
+    {
+      if (count == 4096)
+	{
+	  std::cout << "Sending " << count << std::endl;
+	  write(sockfd, "4096\n", 5);
+	  write(sockfd, buffer, 4096);
+	  //std::cout << buffer << std::endl;
+	  count = 0;
+	  bzero(buffer, 4096);
+	}
+      buffer[count] = encoded[i];
+      ++count;
+    }
+  
+  if (count > 0)
+    {
+      std::stringstream ss2;
+      ss2 << count;
+      std::string tosend = ss2.str();
+      tosend += "\n";
+      std::cout << "Sending " << count << std::endl;
+      write(sockfd, tosend.c_str(), tosend.size());
+      write(sockfd, buffer, count);
+    }
   close(sockfd);
-
-  printf("%s\n",buffer);
+  //printf("%s\n",buffer);
   return 0;
 }
