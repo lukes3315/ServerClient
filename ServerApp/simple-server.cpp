@@ -11,6 +11,7 @@
 #include <string>
 #include <iostream>
 #include "Server.hpp"
+#include "DisplayManager.hpp"
 
 int main(int ac, char **av)
 { 
@@ -28,6 +29,7 @@ int main(int ac, char **av)
 	  std::cout << "Refused client" << std::endl;
 	}
     }
-  delete serv;
+  std::cout << "Delete Server" << std::endl;
+  delete serv; 
   return 0;
 }

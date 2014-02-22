@@ -6,6 +6,7 @@
 #include <iostream>
 #include <strings.h>
 #include <stdlib.h>
+#include "DisplayManager.hpp"
 
 class Server;
 
@@ -22,6 +23,7 @@ private :
   int ID;
   bool running;
   Server *server;
+  DisplayManager * dispManager;
   std::thread * backgroundReadingThread;
 };
 
