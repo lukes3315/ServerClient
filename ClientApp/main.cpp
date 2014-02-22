@@ -102,6 +102,7 @@ int main(int argc, char *argv[])
       char buffer[4096];
       bzero(buffer, 4096);
       int count = 0;
+
       for (int i = 0 ; i < encoded.size() ; ++i)
 	{
 	  if (count == 4096)

@@ -84,9 +84,11 @@ void Client::readData(int _socket)
 		      std::string decoded = base64_decode(imgData);
 		      //std::cout << "Decoded data size = " << decoded.size() << std::endl;
 		      bzero(img->data, sizeof(unsigned char)*decoded.size() + 1);
+		      int j = decoded.size() - 1;
 		      for (int i = 0 ; i < decoded.size() ; ++i)
 			{
-			  img->data[i]  = decoded[i];
+			  img->data[i]  = decoded[j];
+			  --j;
 			}
 		      dispManager->updateMatrix(img, true);
 		      imgData = "";

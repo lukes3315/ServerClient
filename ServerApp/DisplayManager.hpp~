@@ -1,0 +1,8 @@
+#ifndef DISPLAY_MANAGER
+#define DISPLAY_MANAGER
+
+#include <SFML/Window.hpp>
+#include <SFML/Graphics.hpp>
+
+
+#endif
