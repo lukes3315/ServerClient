@@ -11,3 +11,4 @@ TODO :
 - Compress frame data
 - Packet reception Check server side
 - Get rid of opencv dependancy -> capture frame data through custom call to webcam driver
+- Use select() instead of read() in server
