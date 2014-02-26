@@ -18,14 +18,18 @@ int main(int ac, char **av)
   Server * serv = new Server(65111);
   while (1)
     {
+      std::cout << "[Before checkClientConnections()" << std::endl;
+      serv->checkClientConnections();
+      std::cout << "[Before acceptConnections()" << std::endl;
       if (serv->acceptConnections() == true)
 	{
-	  serv->checkClientConnections();
+	  std::cout << "[After acceptConnections()" << std::endl;
 	  std::cout << "Accepted client, current connections = "
 		    << serv->getCurrentConnections() << std::endl;
 	}
       else
 	{
+	  sleep(1);
 	  std::cout << "Refused client" << std::endl;
 	}
     }

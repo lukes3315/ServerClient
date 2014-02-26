@@ -15,6 +15,7 @@ Client::Client(int _id, int _socket, Server *serv)
       this->backgroundReadingThread = new std::thread(&Client::readData, 
 						      this,
 						      _socket);
+      this->backgroundReadingThread->detach();
     }
   catch (std::exception & e)
     {
@@ -24,18 +25,23 @@ Client::Client(int _id, int _socket, Server *serv)
 
 Client::~Client()
 {
+  std::cout << "Setting reading thread  to false" << std::endl;
   running = false;
+  std::cout << "Stopping display thread" << std::endl;
   dispManager->setRunning(false);
+  std::cout << "Closing socket fd" << std::endl;
   if (socketfd > 0)
     {
       close(socketfd);
     }
+  std::cout << "Deleting DisplayManager" << std::endl;
   delete dispManager;
+  std::cout << "Deleting reading thread" << std::endl;
+  delete backgroundReadingThread;
 }
 
 void Client::readData(int _socket)
 {  
-  std::cout << "Starting thread for client # " << ID << std::endl;
   unsigned char * buffer = (unsigned char*)malloc(sizeof(unsigned char) * 1);
   cv::namedWindow("win");
   std::string data = "";
@@ -63,8 +69,8 @@ void Client::readData(int _socket)
 		  std::string rows = data.substr(data.find_first_of("x") + 1, data.find_first_of("-"));
 		  std::string matSize = data.substr(data.find_first_of("-") + 1, data.find_last_of("-"));
 		  std::string imgType = data.substr(data.find_last_of("-") + 1, data.size());
-		  long longRows = atol(rows.c_str());
-		  long longCols = atol(cols.c_str());
+		  int longRows = atoi(rows.c_str());
+		  int longCols = atoi(cols.c_str());
 		  long matrixSize = atol(matSize.c_str());
 		  int imageType = atoi(imgType.c_str());
 		  img = new cv::Mat(longRows, longCols, imageType);
@@ -102,6 +108,11 @@ void Client::readData(int _socket)
 		{
 		  data  += buffer[0];
 		}
+	    }
+	  else
+	    {
+	      running = false;
+	      break;
 	    }
 	}
     }

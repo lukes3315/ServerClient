@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <unistd.h>
+#include <fcntl.h>
 #include "Server.hpp"
 
 void Server::writeError(const std::string & method_name, const std::string & error_name)
@@ -30,7 +31,6 @@ Server::Server(int port)
   int bind_err;
   if ((bind_err = bind(socketfd, (struct sockaddr*)&self, sizeof(self))) < 0)
     {
-      std::cout << "bind error code " << errno << std::endl;
       writeError("Server constructor bind", "Error binding");
       exit(0);
     }
@@ -39,6 +39,12 @@ Server::Server(int port)
       writeError("Server constructor listen", "Error listening");
       exit(0);
     }
+
+  if (fcntl(socketfd, F_SETFL, O_NDELAY) < 0) {
+    writeError("Server constructor fcntl", "Error NON_BLOCKING_SOCKET");
+    exit(0);
+  }
+  
   someClientsNotRunning = false;
 }
 
@@ -72,10 +78,13 @@ bool Server::acceptConnections()
       writeError("Server acceptConnection accept", "Error accept");
       return false;
     }
-  ++clientIDS;
-  Client* c = new Client(clientIDS, clientfd, this);
-  std::cout << "Adding client = " << clientfd << std::endl;
-  clients.push_back(c);
+  else
+    {
+      ++clientIDS;
+      Client* c = new Client(clientIDS, clientfd, this);
+      std::cout << "Adding client = " << clientfd << std::endl;
+      clients.push_back(c);
+    }
   return true;
 }
 
@@ -90,13 +99,18 @@ void Server::checkClientConnections()
     {
       std::vector<Client*>::iterator it = clients.begin();
 
+      writeError("Server checkClientConnections()", "Before loop");
+      someClientsNotRunning = false;
+      std::cout << "ClientList size = " << clients.size() << std::endl;
       for (; it != clients.end() ; ++it)
 	{
 	  if ((*it)->isRunning() == false)
 	    {
+	      delete *it;
 	      it = clients.erase(it);
+	      break;
 	    }
 	}
-      someClientsNotRunning = false;
+      writeError("Server checkClientConnections()", "After loop");
   }
 }
