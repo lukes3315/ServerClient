@@ -3,6 +3,8 @@
 #include "Client.hpp"
 #include "base64.hpp"
 
+#define PACKET_SIZE 18000
+
 Client::Client(int _id, int _socket, Server *serv)
 {
   this->ID = _id;
@@ -31,6 +33,7 @@ Client::~Client()
       close(socketfd);
     }
   delete dispManager;
+  delete backgroundReadingThread;
 }
 
 void Client::readData(int _socket)
@@ -50,8 +53,7 @@ void Client::readData(int _socket)
       int readsize = 1;
       bool gotSize = false;
       std::string imgData;
-      char buffImg[4096];
-      bzero(buffImg, 4096);
+      char * buffImg = NULL;
       while (running && bytesRead > 0)
 	{
 	  bytesRead = read(_socket, buffer, 1);
@@ -75,35 +77,41 @@ void Client::readData(int _socket)
 		}
 	      else if (buffer[0] == '\n' && gotSize == true)
 		{
-		  bzero(buffImg, 4096);
-		  int r = read(_socket, buffImg, 4096);
-		  imgData += buffImg;
-		  if (data != "4096")
+		  long packet_size = atol(data.c_str());
+		  std::cout << "Packet size = " << packet_size<< std::endl;
+		  if (buffImg == NULL)
 		    {
-		      //std::cout << "Image received " << imgData.size() << std::endl;
-		      std::string decoded = base64_decode(imgData);
-		      //std::cout << "Decoded data size = " << decoded.size() << std::endl;
-		      bzero(img->data, sizeof(unsigned char)*decoded.size() + 1);
-		      int j = decoded.size() - 1;
-		      for (int i = 0 ; i < decoded.size() ; ++i)
-			{
-			  img->data[i]  = decoded[j];
-			  --j;
-			}
-		      dispManager->updateMatrix(img, true);
-		      imgData = "";
-		      imgData.shrink_to_fit();
-		      //std::cout << "Refresh " << std::endl;
-		      //free(img->data);
+		      buffImg = (char*)malloc(sizeof(char) * (packet_size + 1));
 		    }
+		  //std::cout << "Received data = " << data << std::endl;
+		  bzero(buffImg, packet_size);
+		  int r = read(_socket, buffImg, packet_size);
+		  imgData = buffImg;
+		  std::string decoded = base64_decode(imgData);
+		  bzero(img->data, sizeof(unsigned char)*decoded.size() + 1);
+		  std::cout << "Decoded buffer size = " << decoded.size() << std::endl;
+		  //		  int j = decoded.size() - 1;
+		  for (int i = 0 ; i < decoded.size() ; ++i)
+		    {
+		      img->data[i]  = decoded[i];
+		    }
+		  dispManager->updateMatrix(img, true);
+		  imgData = "";
+		  imgData.shrink_to_fit();
+		  //std::cout << "Refresh " << std::endl;
+		  //free(img->data);
 		  data = "";
+		  data.shrink_to_fit();
 		}
 	      else
 		{
 		  data  += buffer[0];
+		  //std::cout << "Dat = " << buffer[0] << std::endl;
 		}
 	    }
 	}
+      if (buffImg != NULL)
+	free(buffImg);
     }
   catch (std::exception e)
     {

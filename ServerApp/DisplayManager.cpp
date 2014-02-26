@@ -25,7 +25,7 @@ DisplayManager::~DisplayManager()
 
 void DisplayManager::displayGraphics()
 {
-  MainWindow = new sf::RenderWindow(sf::VideoMode(640, 480, 16), "Client #");
+  MainWindow = new sf::RenderWindow(sf::VideoMode(640, 480, 8), "Client #");
   sf::Event event;
   sf::Image * image = NULL;
   sf::Sprite sprite;
@@ -49,30 +49,6 @@ void DisplayManager::displayGraphics()
 	    }
 	  else
 	    {
-	      //std::cout << matrix->type() << std::endl;
-	      cv::imshow("DATA", *matrix);
-	      cv::waitKey(1);
-	      /*std::cout << matrix->cols << " image = " << image->GetWidth() << std::endl;
-		for (int x = 0 ; x < image->GetWidth() ; ++x)
-		{
-		for (int y = 0 ; y < image->GetHeight() ; ++y)
-		{
-		color = matrix->at<cv::Vec4b>(y, x);
-		image->SetPixel(x, y, sf::Color(color.val[2], color.val[1], color.val[0]));
-		}
-		}*/
-	      
-	      /*
-	      for (int y = 0 ; y < matrix->rows ; ++y)
-		 {
-		   for ( int x = 0 ; x < matrix->cols ; ++x)
-		     {
-		       rgbData[(x * 4) * (matrix->rows) + (y * 4) + 2] = matrix->data[x * (matrix->rows * matrix->channels()) + (y *matrix->channels()) + 0];
-		       rgbData[(x * 4) * (matrix->rows) + (y * 4) + 1] = matrix->data[x * (matrix->rows * matrix->channels()) + (y * matrix->channels()) + 1];
-		       rgbData[(x * 4) * (matrix->rows) + (y * 4)] = matrix->data[x * (matrix->rows * matrix->channels()) + (y * matrix->channels()) + 2];
-		     }
-		 }
-	      */
 	      int j = matrix->cols * matrix->rows;
 	      for (int i = 0 ; i < (matrix->cols * matrix->rows); ++i)
 		{
@@ -81,7 +57,9 @@ void DisplayManager::displayGraphics()
 		  rgbData[(i * 4) + 2] = matrix->data[(j * matrix->channels()) + 2];
 		  --j;
 		}
+	      std::cout << "[MainDisplayLoop matrix->cols = ]" << matrix->cols << std::endl;
 	      image->LoadFromPixels(matrix->cols, matrix->rows, (const sf::Uint8*)rgbData);
+	      std::cout << "Sprite Width = "  << sprite.GetSize().y << " Image Width = " << image->GetHeight() << std::endl;
 	      sprite.SetImage(*image);
 	      MainWindow->Draw(sprite);
 	    }
@@ -97,6 +75,7 @@ void DisplayManager::displayGraphics()
 	}
 	MainWindow->Display();
     }
+  std::cout << "DisplayManager freeing data" << std::endl;
   free(rgbData);
   MainWindow->Close();
 }
@@ -110,6 +89,18 @@ void DisplayManager::setRunning(bool _running)
 void DisplayManager::setUpdate(bool _update)
 {
   update = _update;
+}
+
+void DisplayManager::setWindowSize(int x, int y)
+{
+  if (MainWindow != NULL)
+    {
+      std::cout << "[DisplayManager setWindowSize(" << x
+		<< ", " << y  << ")" << std::endl; 
+      //MainWindow->SetSize(x, y);
+      std::cout << "[DisplayManager 2 setWindowSize(" << x
+		<< ", " << y  << ")" << std::endl; 
+    }
 }
 
 void DisplayManager::updateMatrix(cv::Mat * _matrix, bool toUpdate)

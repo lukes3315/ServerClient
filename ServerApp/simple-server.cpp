@@ -27,6 +27,7 @@ int main(int ac, char **av)
       else
 	{
 	  std::cout << "Refused client" << std::endl;
+	  sleep(1);
 	}
     }
   std::cout << "Delete Server" << std::endl;

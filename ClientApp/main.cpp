@@ -11,15 +11,18 @@
 #include <opencv2/opencv.hpp>
 #include "base64.hpp"
 
+
+#define PACKET_SIZE 18000
+
 int main(int argc, char *argv[])
 {
   int sockfd, portno, n;
   struct sockaddr_in serv_addr;
   struct hostent *server;
   cv::Mat img;
-  //  cv::VideoCapture cap("vid.mp4");
-  cv::VideoCapture cap(0);
-  
+  cv::VideoCapture cap("../../video.mp4");
+  //cv::VideoCapture cap(0);
+
   if (!cap.isOpened())
     {
       std::cout << "Error opening file" << std::endl;
@@ -56,10 +59,9 @@ int main(int argc, char *argv[])
       perror("ERROR connecting");
       exit(1);
     }
-  int k = -1;
-  cv::Mat resized(480, 640, img.type());
-
   
+  int k = -1;
+  cv::Mat resized(480, 640, img.type());  
   unsigned char * bytes;
   int sizex = 0, sizey = 0;
   cap >> img;
@@ -75,7 +77,7 @@ int main(int argc, char *argv[])
   for (int i = 0; i < size_string.size() ; ++i)
     {
       std::cout << "Sending = " << size_string[i] << std::endl;
-      write(sockfd, &size_string[i], 1);
+      sendto(sockfd, &size_string[i], 1, 0, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
     }
   write(sockfd, "-", 1);
   ss.str("");
@@ -88,45 +90,17 @@ int main(int argc, char *argv[])
 	break;
       cv::resize(img, resized, cv::Size(640, 480));
       std::basic_string<char> encoded = base64_encode(resized.data, resized.total() * resized.elemSize());
-      std::cout << encoded.size() << std::endl;
-      ss << encoded.size();
-      size_string = ss.str();
-      write(sockfd, size_string.c_str(), size_string.size());
+      std::string str = "";
       
-      write(sockfd,  "-", 1);
       ss.str("");
       ss.clear();
-      ss << img.type();
-      write(sockfd, ss.str().c_str(), ss.str().size());
-      write(sockfd, "\n", 1);
-      char buffer[4096];
-      bzero(buffer, 4096);
-      int count = 0;
-
-      for (int i = 0 ; i < encoded.size() ; ++i)
-	{
-	  if (count == 4096)
-	    {
-	      //std::cout << "Sending " << count << std::endl;
-	      write(sockfd, "4096\n", 5);
-	      write(sockfd, buffer, 4096);
-	      count = 0;
-	      bzero(buffer, 4096);
-	    }
-	  buffer[count] = encoded[i];
-	  ++count;
-	}
-      
-      if (count > 0)
-	{
-	  std::stringstream ss2;
-	  ss2 << count;
-	  std::string tosend = ss2.str();
-	  tosend += "\n";
-	  std::cout << "Sending " << count << std::endl;
-	  write(sockfd, tosend.c_str(), tosend.size());
-	  write(sockfd, buffer, count);
-	}
+      ss << encoded.size();
+      str = ss.str() + "\n";
+      //std::cout << "Sending " << count << std::endl;
+      sendto(sockfd, str.c_str(), str.size(), 0,(struct sockaddr*)&serv_addr, sizeof(serv_addr));
+      std::cout << "Sending header = "<< str << std::endl;
+      sendto(sockfd, encoded.c_str(), encoded.size(), 0,(struct sockaddr*)&serv_addr, sizeof(serv_addr));
+      //std::cout << "Sending bytes = "<< encoded.size() << std::endl;
       cv::imshow("img sent", img);
       cv::waitKey(1);
     }

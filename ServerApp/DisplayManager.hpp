@@ -16,6 +16,7 @@ public :
   void displayGraphics();
   void setRunning(bool);
   void setUpdate(bool);
+  void setWindowSize(int, int);
   void updateMatrix(cv::Mat *, bool = false);
 private :
   std::thread * graphicLoop;
